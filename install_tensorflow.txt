@@ -1,0 +1,4 @@
+https://github.com/mrdbourke/m1-machine-learning-test
+
+
+https://towardsdatascience.com/yes-you-can-run-pytorch-natively-on-m1-macbooks-and-heres-how-35d2eaa07a83
