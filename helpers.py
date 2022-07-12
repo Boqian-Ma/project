@@ -1,3 +1,74 @@
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+# io related
+# from skimage.io import imread
+import os
+from glob import glob
+import cv2
+from matplotlib import pyplot as plt
+import matplotlib 
+
+from sklearn.model_selection import train_test_split
+import torch
+# %matplotlib inline
+
+from torch.utils.data import DataLoader, Dataset
+from torchvision.utils import make_grid
+from torchvision.utils import save_image
+
+from PIL import Image
+
+
+from skimage import io, transform
+
+import torchvision.transforms as transforms
+
+class retinaDataset(Dataset):
+
+    def __init__(self, transforms=None):
+        'Initialization'
+        self.image_size = 512
+        self.transforms = transforms
+
+        self.train_df, self.valid_df = load_datasets()
+    
+    def __len__(self):
+        'Denotes the total number of samples'
+        return len(self.train_df)
+
+    def __getitem__(self, index):
+        'Generates one sample of data'
+        # Select sample
+        
+        img_path = self.train_df["path"][index]
+        
+        # print(img_path)
+
+        img = Image.open(img_path)
+        
+        if(self.transforms):
+            img = self.transforms(img)
+
+            for i in range(len(img)):
+                # print(img[0])
+                mean = torch.mean(img[i])
+                std = torch.std(img[i])
+                img[i] = (img[i] - mean) / std
+
+        return img, torch.tensor(self.train_df.iloc[index].level)
+    
+    def testLen(self):
+        return len(self.valid_df)
+    
+    def getTest(self, index):
+        img_path = self.train_df["path"][index]
+        img = Image.open(img_path)
+        
+        if(self.transforms):
+            img = self.transforms(img)
+        return img, torch.tensor(self.valid_df.iloc[index].level)
+
+
 def load_datasets():
 
     base_data_dir = os.path.join('data')
@@ -41,4 +112,6 @@ def load_datasets():
     train_df = raw_train_df.groupby(['level', 'eye']).apply(lambda x: x.sample(75, replace = True)).reset_index(drop = True)                                                   
 
     return train_df, valid_df
-    
+
+
+
