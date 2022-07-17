@@ -96,18 +96,22 @@ def load_datasets():
     # # Output variable to categorical
     # retina_df['level_cat'] = retina_df['level'].map(lambda x: to_categorical(x, 1+retina_df['level'].max()))
     # Remove NA 
+
     retina_df.dropna(inplace = True)
     retina_df = retina_df[retina_df['exists']]
 
     # Split traing and valid sets
     rr_df = retina_df[['PatientId', 'level']].drop_duplicates()
+
     train_ids, valid_ids = train_test_split(rr_df['PatientId'], 
                                     test_size = 0.25, 
                                     random_state = 2018,
                                     stratify = rr_df['level'])
                                     
     raw_train_df = retina_df[retina_df['PatientId'].isin(train_ids)]
-    valid_df = retina_df[retina_df['PatientId'].isin(valid_ids)]
+
+    valid_df = retina_df[retina_df['PatientId'].isin(valid_ids)].reset_index(drop = True)  
+
     print('train', raw_train_df.shape[0], 'validation', valid_df.shape[0])
     
     # balance size variance in each class
