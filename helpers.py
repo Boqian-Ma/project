@@ -25,22 +25,24 @@ import torchvision.transforms as transforms
 
 class retinaDataset(Dataset):
 
-    def __init__(self, transforms=None):
+    def __init__(self, df, transforms=None):
         'Initialization'
         self.image_size = 512
         self.transforms = transforms
 
-        self.train_df, self.valid_df = load_datasets()
+        self.df = df
+
+        # self.train_df, self.valid_df = load_datasets()
     
     def __len__(self):
         'Denotes the total number of samples'
-        return len(self.train_df)
+        return len(self.df)
 
     def __getitem__(self, index):
         'Generates one sample of data'
         # Select sample
         
-        img_path = self.train_df["path"][index]
+        img_path = self.df["path"][index]
         
         # print(img_path)
 
@@ -55,18 +57,18 @@ class retinaDataset(Dataset):
                 std = torch.std(img[i])
                 img[i] = (img[i] - mean) / std
 
-        return img, torch.tensor(self.train_df.iloc[index].level)
+        return img, torch.tensor(self.df.iloc[index].level)
     
-    def testLen(self):
-        return len(self.valid_df)
+    # def testLen(self):
+    #     return len(self.valid_df)
     
-    def getTest(self, index):
-        img_path = self.train_df["path"][index]
-        img = Image.open(img_path)
+    # def getTest(self, index):
+    #     img_path = self.train_df["path"][index]
+    #     img = Image.open(img_path)
         
-        if(self.transforms):
-            img = self.transforms(img)
-        return img, torch.tensor(self.valid_df.iloc[index].level)
+    #     if(self.transforms):
+    #         img = self.transforms(img)
+    #     return img, torch.tensor(self.valid_df.iloc[index].level)
 
 
 def load_datasets():
