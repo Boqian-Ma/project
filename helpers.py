@@ -1,25 +1,22 @@
-import numpy as np # linear algebra
+# import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-# io related
+# io relatedsklea
 # from skimage.io import imread
 import os
-from glob import glob
-import cv2
-from matplotlib import pyplot as plt
-import matplotlib 
+# from glob import glob
+# from matplotlib import pyplot as plt
 
 from sklearn.model_selection import train_test_split
 import torch
 # %matplotlib inline
 
 from torch.utils.data import DataLoader, Dataset
-from torchvision.utils import make_grid
-from torchvision.utils import save_image
-
+# from torchvision.utils import make_grid
+# from torchvision.utils import save_image
 from PIL import Image
+# from skimage import io, transform
 
-
-from skimage import io, transform
+from tqdm.notebook import tqdm, trange
 
 import torchvision.transforms as transforms
 
@@ -130,5 +127,101 @@ def load_datasets():
 
     return train_df, valid_df
 
+def train(model, iterator, optimizer, criterion, device):
+
+    epoch_loss = 0
+    epoch_acc = 0
+
+    model.train()
+
+    for (x, y) in tqdm(iterator, desc="Training", leave=False):
+
+        x = x.to(device)
+        y = y.to(device)
+
+        optimizer.zero_grad()
+
+        y_pred, _ = model(x)
+
+        loss = criterion(y_pred, y)
+
+        acc = calculate_accuracy(y_pred, y)
+
+        loss.backward()
+
+        optimizer.step()
+
+        epoch_loss += loss.item()
+        epoch_acc += acc.item()
+
+    return epoch_loss / len(iterator), epoch_acc / len(iterator)
 
 
+def evaluate(model, iterator, criterion, device):
+
+    epoch_loss = 0
+    epoch_acc = 0
+
+    model.eval()
+
+    with torch.no_grad():
+
+        for (x, y) in tqdm(iterator, desc="Evaluating", leave=False):
+
+            x = x.to(device)
+            y = y.to(device)
+
+            y_pred, _ = model(x)
+
+            loss = criterion(y_pred, y)
+
+            acc = calculate_accuracy(y_pred, y)
+
+            epoch_loss += loss.item()
+            epoch_acc += acc.item()
+
+    return epoch_loss / len(iterator), epoch_acc / len(iterator)
+
+
+def epoch_time(start_time, end_time):
+    elapsed_time = end_time - start_time
+    elapsed_mins = int(elapsed_time / 60)
+    elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
+    return elapsed_mins, elapsed_secs
+
+def calculate_accuracy(y_pred, y):
+    top_pred = y_pred.argmax(1, keepdim=True)
+    correct = top_pred.eq(y.view_as(top_pred)).sum()
+    acc = correct.float() / y.shape[0]
+    return acc
+
+
+def load_data_loaders(batch_size=1, num_workers=0):
+    IMG_SIZE = 224
+
+    train_transforms = transforms.Compose([
+        transforms.Resize((IMG_SIZE,IMG_SIZE)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+    ])
+
+    valid_transforms = transforms.Compose([
+        transforms.Resize((IMG_SIZE,IMG_SIZE)),
+        transforms.ToTensor(),
+    ])
+
+    train_df, valid_df = load_datasets()
+    # valid_df, train_df  = load_datasets()
+
+    train_dataset = retinaDataset(train_df, transforms=train_transforms)
+    valid_dataset = retinaDataset(valid_df, transforms=valid_transforms)
+
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size,
+                            shuffle=True, num_workers=num_workers)
+
+    valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size,
+                            shuffle=True, num_workers=num_workers)
+
+    classes = (0,1,2,3,4,5)
+
+    return train_dataloader, valid_dataloader
