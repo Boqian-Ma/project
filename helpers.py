@@ -100,22 +100,33 @@ def load_datasets():
     retina_df.dropna(inplace = True)
     retina_df = retina_df[retina_df['exists']]
 
-    # Split traing and valid sets
     rr_df = retina_df[['PatientId', 'level']].drop_duplicates()
 
+
+
+    # Split traing and valid sets
     train_ids, valid_ids = train_test_split(rr_df['PatientId'], 
                                     test_size = 0.25, 
                                     random_state = 2018,
                                     stratify = rr_df['level'])
                                     
-    raw_train_df = retina_df[retina_df['PatientId'].isin(train_ids)]
+    train_df = retina_df[retina_df['PatientId'].isin(train_ids)].reset_index(drop = True)  
 
     valid_df = retina_df[retina_df['PatientId'].isin(valid_ids)].reset_index(drop = True)  
 
-    print('train', raw_train_df.shape[0], 'validation', valid_df.shape[0])
-    
+    # print('train', raw_train_df.shape[0], 'validation', valid_df.shape[0])
+
+    # balance out training data distribution
+    # level_0 = int((raw_train_df.level == 0).sum() / 2)
+    # level_1 = int((raw_train_df.level == 1).sum() / 2)
+    # level_2 = int((raw_train_df.level == 2).sum() / 2)
+    # level_3 = int((raw_train_df.level == 3).sum() / 2)
+    # level_4 = int((raw_train_df.level == 4).sum() / 2)
+    # min_count = min(level_0, level_1, level_2, level_3, level_4)
+
     # balance size variance in each class
-    train_df = raw_train_df.groupby(['level', 'eye']).apply(lambda x: x.sample(75, replace = True)).reset_index(drop = True)                                                   
+    # train_df = raw_train_df.groupby(['level', 'eye']).apply(lambda x: x.sample(min_count, replace = True)).reset_index(drop = True)                                                   
+    # train_df = raw_train_df.groupby(['level', 'eye']).reset_index(drop = True)                                                   
 
     return train_df, valid_df
 
